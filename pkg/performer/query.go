@@ -36,3 +36,14 @@ func CountByAppearsWith(ctx context.Context, r CountQueryer, id int) (int, error
 
 	return r.QueryCount(ctx, filter, nil)
 }
+
+func CountScenesByAppearsWith(ctx context.Context, r CountQueryer, id int) (int, error) {
+	filter := &models.PerformerFilterType{
+		Performers: &models.MultiCriterionInput{
+			Value:    []string{strconv.Itoa(id)},
+			Modifier: models.CriterionModifierIncludes,
+		},
+	}
+
+	return r.QueryCount(ctx, filter, nil)
+}

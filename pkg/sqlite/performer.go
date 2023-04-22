@@ -961,6 +961,9 @@ func (qb *PerformerStore) getPerformerSort(findFilter *models.FindFilterType) st
 	if sort == "galleries_count" {
 		return getCountSort(performerTable, performersGalleriesTable, performerIDColumn, direction)
 	}
+	if sort == "blah" {
+		return getCountSort(performerTable, performersGalleriesTable, performerIDColumn, direction)
+	}
 
 	return getSort(sort, direction, "performers")
 }

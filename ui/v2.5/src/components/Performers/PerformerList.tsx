@@ -7,6 +7,7 @@ import * as GQL from "src/core/generated-graphql";
 import {
   queryFindPerformers,
   useFindPerformers,
+  useFindPerformersPair,
   usePerformersDestroy,
 } from "src/core/StashService";
 import {
@@ -34,6 +35,17 @@ const PerformerItemList = makeItemList({
   },
 });
 
+const PerformerPairItemList = makeItemList({
+  filterMode: GQL.FilterMode.Performers,
+  useResult: useFindPerformersPair,
+  getItems(result: GQL.FindPerformersQueryResult) {
+    return result?.data?.findPerformers?.performers ?? [];
+  },
+  getCount(result: GQL.FindPerformersQueryResult) {
+    return result?.data?.findPerformers?.count ?? 0;
+  },
+});
+
 interface IPerformerList {
   filterHook?: (filter: ListFilterModel) => ListFilterModel;
   persistState?: PersistanceLevel;
@@ -51,6 +63,7 @@ export const PerformerList: React.FC<IPerformerList> = ({
   const history = useHistory();
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const [isExportAll, setIsExportAll] = useState(false);
+  const foo = 'bar';
 
   const otherOperations = [
     {
@@ -200,8 +213,10 @@ export const PerformerList: React.FC<IPerformerList> = ({
     );
   }
 
+  if (extraCriteria?.performer){
+
   return (
-    <PerformerItemList
+    <PerformerPairItemList
       selectable
       filterHook={filterHook}
       persistState={persistState}
@@ -213,4 +228,21 @@ export const PerformerList: React.FC<IPerformerList> = ({
       renderDeleteDialog={renderDeleteDialog}
     />
   );
+  }else{
+    return (
+      <PerformerItemList
+        selectable
+        filterHook={filterHook}
+        persistState={persistState}
+        alterQuery={alterQuery}
+        otherOperations={otherOperations}
+        addKeybinds={addKeybinds}
+        renderContent={renderContent}
+        renderEditDialog={renderEditDialog}
+        renderDeleteDialog={renderDeleteDialog}
+      />
+    );
+
+
+  }
 };

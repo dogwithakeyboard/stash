@@ -25,6 +25,7 @@ const sortByOptions = [
   "tag_count",
   "random",
   "rating",
+  "blah"
 ]
   .map(ListFilterOptions.createSortBy)
   .concat([

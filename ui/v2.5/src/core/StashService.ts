@@ -190,6 +190,15 @@ export const useFindPerformers = (filter?: ListFilterModel) =>
     },
   });
 
+  export const useFindPerformersPair = (filter?: ListFilterModel) =>
+  GQL.useFindPerformersPairQuery({
+    skip: filter === undefined,
+    variables: {
+      filter: filter?.makeFindFilter(),
+      performer_filter: filter?.makeFilter(),
+    },
+  });
+
 export const useFindTags = (filter?: ListFilterModel) =>
   GQL.useFindTagsQuery({
     skip: filter === undefined,

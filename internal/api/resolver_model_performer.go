@@ -2,15 +2,19 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"strings"
 
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/stashapp/stash/internal/api/loaders"
 	"github.com/stashapp/stash/internal/api/urlbuilders"
 	"github.com/stashapp/stash/pkg/gallery"
 	"github.com/stashapp/stash/pkg/image"
+	"github.com/stashapp/stash/pkg/logger"
 	"github.com/stashapp/stash/pkg/models"
 	"github.com/stashapp/stash/pkg/performer"
+	"github.com/stashapp/stash/pkg/scene"
 )
 
 // Checksum is deprecated
@@ -193,4 +197,60 @@ func (r *performerResolver) PerformerCount(ctx context.Context, obj *models.Perf
 	}
 
 	return &res, nil
+}
+
+func (r *performerResolver) PairSceneCount(ctx context.Context, obj *models.Performer) (ret *int, err error) {
+
+	logger.Warn("begin scene pair count")
+
+	var total int
+
+	bar := []string{strconv.Itoa(obj.ID)}
+
+	rq := graphql.GetOperationContext(ctx).Variables
+
+	if rq["performer_filter"] == nil {
+
+		return nil, err
+
+	} else {
+
+		performerFilterMap := rq["performer_filter"].(map[string]interface{})
+
+		if performerFilterMap["performers"] == nil {
+			return nil, err
+		} else {
+
+			performersMap := performerFilterMap["performers"].(map[string]interface{})
+			performersValue := performersMap["value"].([]interface{})
+
+			valueString := strings.Trim(fmt.Sprint(performersValue), "[]")
+
+			//logger.Warn(valueString)
+
+			bar = append(bar, valueString)
+
+			logger.Warn(bar)
+
+		}
+	}
+
+	sceneFilter := &models.SceneFilterType{
+		Performers: &models.MultiCriterionInput{
+			Modifier: models.CriterionModifierIncludesAll,
+			Value:    bar,
+		},
+	}
+
+	if err := r.withReadTxn(ctx, func(ctx context.Context) error {
+		scenes, ret, err := scene.QueryWithCount(ctx, r.repository.Scene, sceneFilter, nil)
+		_ = scenes
+		total = ret
+
+		return err
+	}); err != nil {
+		return nil, err
+	}
+
+	return &total, nil
 }

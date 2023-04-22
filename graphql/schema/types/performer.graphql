@@ -52,6 +52,7 @@ type Performer {
   updated_at: Time!
   movie_count: Int
   movies: [Movie!]!
+  pair_scene_count: Int # Resolver
 }
 
 input PerformerCreateInput {
