@@ -5,8 +5,6 @@ const MovieSceneListSortByOptions = ["movie_scene_number"].map(
   ListFilterOptions.createSortBy
 );
 
-console.log(SceneListFilterOptions.sortByOptions);
-
 const sortByOptions = [
   ...MovieSceneListSortByOptions,
   ...SceneListFilterOptions.sortByOptions,
