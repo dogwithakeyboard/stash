@@ -8,6 +8,7 @@ import { SceneMarkerListFilterOptions } from "./scene-markers";
 import { SceneListFilterOptions } from "./scenes";
 import { StudioListFilterOptions } from "./studios";
 import { TagListFilterOptions } from "./tags";
+import { MovieSceneListFilterOptions } from "./movie-scenes"
 
 export function getFilterOptions(mode: FilterMode): ListFilterOptions {
   switch (mode) {
@@ -27,5 +28,7 @@ export function getFilterOptions(mode: FilterMode): ListFilterOptions {
       return TagListFilterOptions;
     case FilterMode.Images:
       return ImageListFilterOptions;
+    case FilterMode.MovieScenes:
+      return MovieSceneListFilterOptions;
   }
 }

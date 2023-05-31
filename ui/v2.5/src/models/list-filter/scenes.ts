@@ -19,7 +19,7 @@ import {
   PerformerTagsCriterionOption,
   TagsCriterionOption,
 } from "./criteria/tags";
-import { ListFilterOptions, MediaSortByOptions } from "./filter-options";
+import { ListFilterOptions, MediaSortByOptions, CreatedSortByOptions } from "./filter-options";
 import { DisplayMode } from "./types";
 import {
   DuplicatedCriterionOption,
@@ -43,11 +43,13 @@ const sortByOptions = [
   "resume_time",
   "play_duration",
   "play_count",
-  "movie_scene_number",
+  // movie_scene_number moved to movie-scenes
+  // "movie_scene_number",
   "interactive",
   "interactive_speed",
   "perceptual_similarity",
   ...MediaSortByOptions,
+  ...CreatedSortByOptions,
 ].map(ListFilterOptions.createSortBy);
 
 const displayModeOptions = [

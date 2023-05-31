@@ -565,6 +565,7 @@ enum FilterMode {
   MOVIES,
   TAGS,
   IMAGES,
+  MOVIE_SCENES
 }
 
 type SavedFilter {

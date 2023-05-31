@@ -49,8 +49,8 @@ export const MovieScenesPanel: React.FC<IMovieScenesPanel> = ({
     return (
       <SceneList
         filterHook={filterHook}
-        defaultSort="movie_scene_number"
         alterQuery={active}
+        filterMode={GQL.FilterMode.MovieScenes}
       />
     );
   }
