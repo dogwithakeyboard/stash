@@ -34,11 +34,23 @@ const PerformerItemList = makeItemList({
   },
 });
 
+const AppearsWithItemList = makeItemList({
+  filterMode: GQL.FilterMode.AppearsWith,
+  useResult: useFindPerformers,
+  getItems(result: GQL.FindPerformersQueryResult) {
+    return result?.data?.findPerformers?.performers ?? [];
+  },
+  getCount(result: GQL.FindPerformersQueryResult) {
+    return result?.data?.findPerformers?.count ?? 0;
+  },
+});
+
 interface IPerformerList {
   filterHook?: (filter: ListFilterModel) => ListFilterModel;
   persistState?: PersistanceLevel;
   alterQuery?: boolean;
   extraCriteria?: IPerformerCardExtraCriteria;
+  filterMode?: GQL.FilterMode;
 }
 
 export const PerformerList: React.FC<IPerformerList> = ({
@@ -46,6 +58,7 @@ export const PerformerList: React.FC<IPerformerList> = ({
   persistState,
   alterQuery,
   extraCriteria,
+  filterMode,
 }) => {
   const intl = useIntl();
   const history = useHistory();
@@ -199,18 +212,34 @@ export const PerformerList: React.FC<IPerformerList> = ({
       />
     );
   }
-
-  return (
-    <PerformerItemList
-      selectable
-      filterHook={filterHook}
-      persistState={persistState}
-      alterQuery={alterQuery}
-      otherOperations={otherOperations}
-      addKeybinds={addKeybinds}
-      renderContent={renderContent}
-      renderEditDialog={renderEditDialog}
-      renderDeleteDialog={renderDeleteDialog}
-    />
-  );
+  
+  if (filterMode == GQL.FilterMode.AppearsWith){
+    return (
+      <AppearsWithItemList
+        selectable
+        filterHook={filterHook}
+        persistState={persistState}
+        alterQuery={alterQuery}
+        otherOperations={otherOperations}
+        addKeybinds={addKeybinds}
+        renderContent={renderContent}
+        renderEditDialog={renderEditDialog}
+        renderDeleteDialog={renderDeleteDialog}
+      />
+    );
+  }else{
+    return (
+      <PerformerItemList
+        selectable
+        filterHook={filterHook}
+        persistState={persistState}
+        alterQuery={alterQuery}
+        otherOperations={otherOperations}
+        addKeybinds={addKeybinds}
+        renderContent={renderContent}
+        renderEditDialog={renderEditDialog}
+        renderDeleteDialog={renderDeleteDialog}
+      />
+    );
+  }
 };
