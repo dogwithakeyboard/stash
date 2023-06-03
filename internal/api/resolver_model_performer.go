@@ -2,15 +2,18 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"strings"
 
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/stashapp/stash/internal/api/loaders"
 	"github.com/stashapp/stash/internal/api/urlbuilders"
 	"github.com/stashapp/stash/pkg/gallery"
 	"github.com/stashapp/stash/pkg/image"
+	"github.com/stashapp/stash/pkg/logger"
 	"github.com/stashapp/stash/pkg/models"
-	"github.com/stashapp/stash/pkg/performer"
+	"github.com/stashapp/stash/pkg/scene"
 )
 
 // Checksum is deprecated
@@ -210,14 +213,61 @@ func (r *performerResolver) MovieCount(ctx context.Context, obj *models.Performe
 	return &res, nil
 }
 
+//func (r *performerResolver) PerformerCount(ctx context.Context, obj *models.Performer) (ret *int, err error) {
+//	var res int
+//	if err := r.withReadTxn(ctx, func(ctx context.Context) error {
+//		res, err = performer.CountByAppearsWith(ctx, r.repository.Performer, obj.ID)
+//		return err
+//	}); err != nil {
+//		return nil, err
+//	}
+
+//	return &res, nil
+//}
+
 func (r *performerResolver) PerformerCount(ctx context.Context, obj *models.Performer) (ret *int, err error) {
-	var res int
+
+	logger.Warn("begin scene pair count")
+
+	var total int
+
+	performerIds := []string{strconv.Itoa(obj.ID)}
+
+	rq := graphql.GetOperationContext(ctx).Variables
+
+	if rq["performer_filter"] == nil {
+		return nil, err
+	} else {
+
+		performerFilterMap := rq["performer_filter"].(map[string]interface{})
+
+		if performerFilterMap["performers"] == nil {
+			return nil, err
+		} else {
+			performersMap := performerFilterMap["performers"].(map[string]interface{})
+			performersValue := performersMap["value"].([]interface{})
+			valueString := strings.Trim(fmt.Sprint(performersValue), "[]")
+			performerIds = append(performerIds, valueString)
+			logger.Warn(performerIds)
+		}
+	}
+
+	sceneFilter := &models.SceneFilterType{
+		Performers: &models.MultiCriterionInput{
+			Modifier: models.CriterionModifierIncludesAll,
+			Value:    performerIds,
+		},
+	}
+
 	if err := r.withReadTxn(ctx, func(ctx context.Context) error {
-		res, err = performer.CountByAppearsWith(ctx, r.repository.Performer, obj.ID)
+		scenes, ret, err := scene.QueryWithCount(ctx, r.repository.Scene, sceneFilter, nil)
+		_ = scenes
+		total = ret
+
 		return err
 	}); err != nil {
 		return nil, err
 	}
 
-	return &res, nil
+	return &total, nil
 }
