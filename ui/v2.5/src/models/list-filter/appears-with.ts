@@ -1,7 +1,7 @@
 import { PerformerListFilterOptions } from "./performers";
 import { ListFilterOptions } from "./filter-options";
 
-const AppearsWithListSortByOptions = ["pair_scene_count", "pair_movie_count", "pair_image_count", "pair_gallery_count"].map(
+const AppearsWithListSortByOptions = ["appears_with_scenes", "appears_with_images", "appears_with_galleries"].map(
   ListFilterOptions.createSortBy
 );
 
