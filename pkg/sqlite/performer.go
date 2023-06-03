@@ -936,6 +936,30 @@ func performerAppearsWithCriterionHandler(qb *PerformerStore, performers *models
 				return
 			}
 
+			formatMaps := []utils.StrFormatMap{
+				{
+					"table":         performersScenesTable,
+					"key":           sceneIDColumn,
+					"sceneColumn":   "COUNT(DISTINCT " + performersScenesTable + "." + sceneIDColumn + ")",
+					"imageColumn":   "NULL",
+					"galleryColumn": "NULL",
+				},
+				{
+					"table":         performersImagesTable,
+					"key":           imageIDColumn,
+					"sceneColumn":   "NULL",
+					"imageColumn":   "COUNT(DISTINCT " + performersImagesTable + "." + imageIDColumn + ")",
+					"galleryColumn": "NULL",
+				},
+				{
+					"table":         performersGalleriesTable,
+					"key":           galleryIDColumn,
+					"sceneColumn":   "NULL",
+					"imageColumn":   "NULL",
+					"galleryColumn": "COUNT(DISTINCT " + performersGalleriesTable + "." + galleryIDColumn + ")",
+				},
+			}
+
 			const derivedPerformerPerformersTable = "all_performers"
 
 			valuesClause := strings.Join(performers.Value, "),(")
@@ -943,44 +967,26 @@ func performerAppearsWithCriterionHandler(qb *PerformerStore, performers *models
 			f.addWith("performer(id) AS (VALUES(" + valuesClause + "))")
 
 			templStr :=
-				`SELECT performer_id, GROUP_CONCAT(scene_count) AS scene_sum, GROUP_CONCAT(image_count) AS image_sum, GROUP_CONCAT(gallery_count) AS gallery_sum
-
-				FROM (
-					SELECT performers_scenes2.performer_id, COUNT(DISTINCT performers_scenes.scene_id) AS scene_count, NULL AS image_count, NULL AS gallery_count
-					FROM performers_scenes
-					INNER JOIN performers_scenes AS performers_scenes2 ON performers_scenes.scene_id = performers_scenes2.scene_id 
-					INNER JOIN performer ON performers_scenes.performer_id = performer.id
-					WHERE performers_scenes2.performer_id != performer.id
-					GROUP BY performers_scenes2.performer_id
-			
-					UNION
-			
-					SELECT performers_images2.performer_id, NULL, COUNT(DISTINCT performers_images.image_id), NULL
-					FROM performers_images 
-					INNER JOIN performers_images AS performers_images2 ON performers_images.image_id = performers_images2.image_id 
-					INNER JOIN performer ON performers_images.performer_id = performer.id 
-					WHERE performers_images2.performer_id != performer.id
-					GROUP BY performers_images2.performer_id	
-							
-					UNION 
-								
-					SELECT performers_galleries2.performer_id, NULL, NULL, COUNT(DISTINCT performers_galleries.gallery_id)
-					FROM performers_galleries 
-					INNER JOIN performers_galleries AS performers_galleries2 ON performers_galleries.gallery_id = performers_galleries2.gallery_id 
-					INNER JOIN performer ON performers_galleries.performer_id = performer.id 
-					WHERE performers_galleries2.performer_id != performer.id
-					GROUP BY performers_galleries2.performer_id
-				)
-			
-				GROUP BY performer_id`
+				`SELECT {table}2.performer_id, {sceneColumn} AS scene_count, {imageColumn} AS image_count, {galleryColumn} AS gallery_count
+				FROM {table}
+				INNER JOIN {table} AS {table}2 ON {table}.{key} = {table}2.{key} 
+				INNER JOIN performer ON {table}.performer_id = performer.id
+				WHERE {table}2.performer_id != performer.id
+				GROUP BY {table}2.performer_id`
 
 			if performers.Modifier == models.CriterionModifierIncludesAll && len(performers.Value) > 1 {
-				templStr += `
-							GROUP BY {primaryTable}2.performer_id
-							HAVING(count(distinct {primaryTable}.performer_id) IS ` + strconv.Itoa(len(performers.Value)) + `)`
+				templStr += `HAVING(count(distinct {table}.performer_id) IS ` + strconv.Itoa(len(performers.Value)) + `)`
 			}
 
-			f.addWith(fmt.Sprintf("%s AS (%s)", derivedPerformerPerformersTable, templStr))
+			var unions []string
+			for _, c := range formatMaps {
+				unions = append(unions, utils.StrFormat(templStr, c))
+			}
+
+			sel := "SELECT performer_id, GROUP_CONCAT(scene_count) AS scene_sum, GROUP_CONCAT(image_count) AS image_sum, GROUP_CONCAT(gallery_count) AS gallery_sum FROM ("
+			grp := ") GROUP BY performer_id"
+
+			f.addWith(fmt.Sprintf("%s AS (%s %s %s)", derivedPerformerPerformersTable, sel, strings.Join(unions, " UNION "), grp))
 			f.addInnerJoin(derivedPerformerPerformersTable, "", fmt.Sprintf("performers.id = %s.performer_id", derivedPerformerPerformersTable))
 		}
 	}
