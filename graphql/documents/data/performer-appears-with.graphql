@@ -1,0 +1,3 @@
+fragment PerformerAppearsWithData on Performer {
+  pair_scene_count 
+}
