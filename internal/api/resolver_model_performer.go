@@ -226,6 +226,114 @@ func (r *performerResolver) PerformerCount(ctx context.Context, obj *models.Perf
 	return &res, nil
 }
 
+func (r *performerResolver) AppearsWithImageCount(ctx context.Context, obj *models.Performer) (ret *int, err error) {
+
+	logger.Warn("begin image pair count")
+
+	performerIds := []string{strconv.Itoa(obj.ID)}
+
+	rq := graphql.GetOperationContext(ctx).Variables
+
+	if rq["performer_filter"] == nil {
+		return nil, err
+	} else {
+
+		performerFilterMap := rq["performer_filter"].(map[string]interface{})
+
+		if performerFilterMap["performers"] == nil {
+			return nil, err
+		} else {
+			performersMap := performerFilterMap["performers"].(map[string]interface{})
+			performersValue := performersMap["value"].([]interface{})
+			valueString := strings.Trim(fmt.Sprint(performersValue), "[]")
+			performerIds = append(performerIds, valueString)
+			logger.Warn(performerIds)
+		}
+	}
+
+	var res int
+	if err := r.withReadTxn(ctx, func(ctx context.Context) error {
+		res, err = image.CountByPerformers(ctx, r.repository.Image, performerIds)
+		return err
+	}); err != nil {
+		return nil, err
+	}
+
+	return &res, nil
+}
+
+func (r *performerResolver) AppearsWithGalleryCount(ctx context.Context, obj *models.Performer) (ret *int, err error) {
+
+	logger.Warn("begin gallery pair count")
+
+	performerIds := []string{strconv.Itoa(obj.ID)}
+
+	rq := graphql.GetOperationContext(ctx).Variables
+
+	if rq["performer_filter"] == nil {
+		return nil, err
+	} else {
+
+		performerFilterMap := rq["performer_filter"].(map[string]interface{})
+
+		if performerFilterMap["performers"] == nil {
+			return nil, err
+		} else {
+			performersMap := performerFilterMap["performers"].(map[string]interface{})
+			performersValue := performersMap["value"].([]interface{})
+			valueString := strings.Trim(fmt.Sprint(performersValue), "[]")
+			performerIds = append(performerIds, valueString)
+			logger.Warn(performerIds)
+		}
+	}
+
+	var res int
+	if err := r.withReadTxn(ctx, func(ctx context.Context) error {
+		res, err = gallery.CountByPerformers(ctx, r.repository.Gallery, performerIds)
+		return err
+	}); err != nil {
+		return nil, err
+	}
+
+	return &res, nil
+}
+
+func (r *performerResolver) AppearsWithMovieCount(ctx context.Context, obj *models.Performer) (ret *int, err error) {
+
+	logger.Warn("begin image pair count")
+
+	performerIds := []string{strconv.Itoa(obj.ID)}
+
+	rq := graphql.GetOperationContext(ctx).Variables
+
+	if rq["performer_filter"] == nil {
+		return nil, err
+	} else {
+
+		performerFilterMap := rq["performer_filter"].(map[string]interface{})
+
+		if performerFilterMap["performers"] == nil {
+			return nil, err
+		} else {
+			performersMap := performerFilterMap["performers"].(map[string]interface{})
+			performersValue := performersMap["value"].([]interface{})
+			valueString := strings.Trim(fmt.Sprint(performersValue), "[]")
+			performerIds = append(performerIds, valueString)
+			logger.Warn(performerIds)
+		}
+	}
+
+	var res int
+	if err := r.withReadTxn(ctx, func(ctx context.Context) error {
+		res, err = image.CountByPerformers(ctx, r.repository.Image, performerIds)
+		return err
+	}); err != nil {
+		return nil, err
+	}
+
+	return &res, nil
+}
+
 func (r *performerResolver) AppearsWithSceneCount(ctx context.Context, obj *models.Performer) (ret *int, err error) {
 
 	logger.Warn("begin scene pair count")

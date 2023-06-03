@@ -7,6 +7,7 @@ import * as GQL from "src/core/generated-graphql";
 import {
   queryFindPerformers,
   useFindPerformers,
+  useFindPerformersAppearsWith,
   usePerformersDestroy,
 } from "src/core/StashService";
 import {
@@ -34,9 +35,9 @@ const PerformerItemList = makeItemList({
   },
 });
 
-const AppearsWithItemList = makeItemList({
+const AppearsWithPerformerItemList = makeItemList({
   filterMode: GQL.FilterMode.AppearsWith,
-  useResult: useFindPerformers,
+  useResult: useFindPerformersAppearsWith,
   getItems(result: GQL.FindPerformersQueryResult) {
     return result?.data?.findPerformers?.performers ?? [];
   },
@@ -215,7 +216,7 @@ export const PerformerList: React.FC<IPerformerList> = ({
   
   if (filterMode == GQL.FilterMode.AppearsWith){
     return (
-      <AppearsWithItemList
+      <AppearsWithPerformerItemList
         selectable
         filterHook={filterHook}
         persistState={persistState}
