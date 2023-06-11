@@ -29,42 +29,6 @@ import { SceneMergeModal } from "./SceneMergeDialog";
 import { objectTitle } from "src/core/files";
 import TextUtils from "src/utils/text";
 
-const renderMetadataByline = (result: GQL.FindScenesQueryResult) => {
-  const duration = result?.data?.findScenes?.duration;
-  const size = result?.data?.findScenes?.filesize;
-  const filesize = size ? TextUtils.fileSize(size) : undefined;
-
-  if (!duration && !size) {
-      return;
-  }
-
-  const separator = duration && size ? " - " : "";
-
-  return (
-    <span className="scenes-stats">
-      &nbsp;(
-      {duration ? (
-        <span className="scenes-duration">
-          {TextUtils.secondsAsTimeString(duration, 3)}
-        </span>
-      ) : undefined}
-      {separator}
-      {size && filesize ? (
-        <span className="scenes-size">
-          <FormattedNumber
-            value={filesize.size}
-            maximumFractionDigits={TextUtils.fileSizeFractionalDigits(
-              filesize.unit
-            )}
-          />
-          {` ${TextUtils.formatFileSizeUnit(filesize.unit)}`}
-        </span>
-      ) : undefined}
-      )
-    </span>
-  );
-};
-
 const SceneItemList = makeItemList({
   filterMode: GQL.FilterMode.Scenes,
   useResult: useFindScenes,
@@ -74,19 +38,41 @@ const SceneItemList = makeItemList({
   getCount(result: GQL.FindScenesQueryResult) {
     return result?.data?.findScenes?.count ?? 0;
   },
-  renderMetadataByline,
-});
+  renderMetadataByline(result: GQL.FindScenesQueryResult) {
+    const duration = result?.data?.findScenes?.duration;
+    const size = result?.data?.findScenes?.filesize;
+    const filesize = size ? TextUtils.fileSize(size) : undefined;
 
-const MovieSceneItemList = makeItemList({
-  filterMode: GQL.FilterMode.MovieScenes,
-  useResult: useFindScenes,
-  getItems(result: GQL.FindScenesQueryResult) {
-    return result?.data?.findScenes?.scenes ?? [];
+    if (!duration && !size) {
+      return;
+    }
+
+    const separator = duration && size ? " - " : "";
+
+    return (
+      <span className="scenes-stats">
+        &nbsp;(
+        {duration ? (
+          <span className="scenes-duration">
+            {TextUtils.secondsAsTimeString(duration, 3)}
+          </span>
+        ) : undefined}
+        {separator}
+        {size && filesize ? (
+          <span className="scenes-size">
+            <FormattedNumber
+              value={filesize.size}
+              maximumFractionDigits={TextUtils.fileSizeFractionalDigits(
+                filesize.unit
+              )}
+            />
+            {` ${TextUtils.formatFileSizeUnit(filesize.unit)}`}
+          </span>
+        ) : undefined}
+        )
+      </span>
+    );
   },
-  getCount(result: GQL.FindScenesQueryResult) {
-    return result?.data?.findScenes?.count ?? 0;
-  },
-  renderMetadataByline,
 });
 
 interface ISceneList {
@@ -94,7 +80,6 @@ interface ISceneList {
   defaultSort?: string;
   persistState?: PersistanceLevel;
   alterQuery?: boolean;
-  filterMode?: GQL.FilterMode;
 }
 
 export const SceneList: React.FC<ISceneList> = ({
@@ -102,7 +87,6 @@ export const SceneList: React.FC<ISceneList> = ({
   defaultSort,
   persistState,
   alterQuery,
-  filterMode,
 }) => {
   const intl = useIntl();
   const history = useHistory();
@@ -366,43 +350,23 @@ export const SceneList: React.FC<ISceneList> = ({
     return <DeleteScenesDialog selected={selectedScenes} onClose={onClose} />;
   }
 
-  if (filterMode == GQL.FilterMode.MovieScenes){
-    return (
-      <TaggerContext>
-        <MovieSceneItemList
-          zoomable
-          selectable
-          filterHook={filterHook}
-          persistState={persistState}
-          alterQuery={alterQuery}
-          otherOperations={otherOperations}
-          addKeybinds={addKeybinds}
-          defaultSort={defaultSort}
-          renderContent={renderContent}
-          renderEditDialog={renderEditDialog}
-          renderDeleteDialog={renderDeleteDialog}
-        />
-      </TaggerContext>
-    );
-  }else{
-    return (
-      <TaggerContext>
-        <SceneItemList
-          zoomable
-          selectable
-          filterHook={filterHook}
-          persistState={persistState}
-          alterQuery={alterQuery}
-          otherOperations={otherOperations}
-          addKeybinds={addKeybinds}
-          defaultSort={defaultSort}
-          renderContent={renderContent}
-          renderEditDialog={renderEditDialog}
-          renderDeleteDialog={renderDeleteDialog}
-        />
-      </TaggerContext>
-    );
-  }
+  return (
+    <TaggerContext>
+      <SceneItemList
+        zoomable
+        selectable
+        filterHook={filterHook}
+        persistState={persistState}
+        alterQuery={alterQuery}
+        otherOperations={otherOperations}
+        addKeybinds={addKeybinds}
+        defaultSort={defaultSort}
+        renderContent={renderContent}
+        renderEditDialog={renderEditDialog}
+        renderDeleteDialog={renderDeleteDialog}
+      />
+    </TaggerContext>
+  );
 };
 
 export default SceneList;
