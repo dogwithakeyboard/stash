@@ -11,10 +11,8 @@ import (
 	"github.com/stashapp/stash/internal/api/urlbuilders"
 	"github.com/stashapp/stash/pkg/gallery"
 	"github.com/stashapp/stash/pkg/image"
-	"github.com/stashapp/stash/pkg/logger"
 	"github.com/stashapp/stash/pkg/models"
 	"github.com/stashapp/stash/pkg/performer"
-	"github.com/stashapp/stash/pkg/scene"
 )
 
 // Checksum is deprecated
@@ -333,11 +331,11 @@ func (r *performerResolver) AppearsWithMovieCount(ctx context.Context, obj *mode
 
 func (r *performerResolver) AppearsWithSceneCount(ctx context.Context, obj *models.Performer) (ret *int, err error) {
 
-	logger.Warn("begin scene pair count")
-
-	var total int
-
-	performerIds := []string{strconv.Itoa(obj.ID)}
+	performers := models.MultiCriterionInput{
+		Modifier: models.CriterionModifierIncludesAll,
+		Value: []string{
+			strconv.Itoa(obj.ID),
+		}}
 
 	rq := graphql.GetOperationContext(ctx).Variables
 
@@ -350,29 +348,22 @@ func (r *performerResolver) AppearsWithSceneCount(ctx context.Context, obj *mode
 		if performerFilterMap["performers"] == nil {
 			return nil, err
 		} else {
+
 			performersMap := performerFilterMap["performers"].(map[string]interface{})
 			performersValue := performersMap["value"].([]interface{})
 			valueString := strings.Trim(fmt.Sprint(performersValue), "[]")
-			performerIds = append(performerIds, valueString)
+			performers.Value = append(performers.Value, valueString)
+
 		}
 	}
 
-	sceneFilter := &models.SceneFilterType{
-		Performers: &models.MultiCriterionInput{
-			Modifier: models.CriterionModifierIncludesAll,
-			Value:    performerIds,
-		},
-	}
-
+	var res int
 	if err := r.withReadTxn(ctx, func(ctx context.Context) error {
-		scenes, ret, err := scene.QueryWithCount(ctx, r.repository.Scene, sceneFilter, nil)
-		_ = scenes
-		total = ret
-
+		res, err = r.repository.Scene.CountByPerformers(ctx, performers)
 		return err
 	}); err != nil {
 		return nil, err
 	}
 
-	return &total, nil
+	return &res, nil
 }
