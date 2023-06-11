@@ -696,7 +696,6 @@ func (qb *SceneStore) CountByPerformerID(ctx context.Context, performerID int) (
 }
 
 func (qb *SceneStore) CountByPerformers(ctx context.Context, performers models.MultiCriterionInput) (int, error) {
-
 	query := `SELECT COUNT(1) AS count FROM (
 		SELECT performers_scenes.scene_id
 		FROM performers_scenes

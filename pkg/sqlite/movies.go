@@ -384,7 +384,6 @@ WHERE performers_scenes.performer_id = ?
 }
 
 func (qb *movieQueryBuilder) CountByPerformers(ctx context.Context, performers models.MultiCriterionInput) (int, error) {
-
 	query := `SELECT COUNT(1) AS count FROM (
 		SELECT movies_scenes.movie_id
 		FROM movies_scenes
