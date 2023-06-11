@@ -565,7 +565,6 @@ enum FilterMode {
   MOVIES,
   TAGS,
   IMAGES,
-  MOVIE_SCENES,
   APPEARS_WITH
 }
 

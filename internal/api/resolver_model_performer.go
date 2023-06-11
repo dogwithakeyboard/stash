@@ -228,8 +228,6 @@ func (r *performerResolver) PerformerCount(ctx context.Context, obj *models.Perf
 
 func (r *performerResolver) AppearsWithImageCount(ctx context.Context, obj *models.Performer) (ret *int, err error) {
 
-	logger.Warn("begin image pair count")
-
 	performerIds := []string{strconv.Itoa(obj.ID)}
 
 	rq := graphql.GetOperationContext(ctx).Variables
@@ -247,7 +245,6 @@ func (r *performerResolver) AppearsWithImageCount(ctx context.Context, obj *mode
 			performersValue := performersMap["value"].([]interface{})
 			valueString := strings.Trim(fmt.Sprint(performersValue), "[]")
 			performerIds = append(performerIds, valueString)
-			logger.Warn(performerIds)
 		}
 	}
 
@@ -264,8 +261,6 @@ func (r *performerResolver) AppearsWithImageCount(ctx context.Context, obj *mode
 
 func (r *performerResolver) AppearsWithGalleryCount(ctx context.Context, obj *models.Performer) (ret *int, err error) {
 
-	logger.Warn("begin gallery pair count")
-
 	performerIds := []string{strconv.Itoa(obj.ID)}
 
 	rq := graphql.GetOperationContext(ctx).Variables
@@ -283,7 +278,6 @@ func (r *performerResolver) AppearsWithGalleryCount(ctx context.Context, obj *mo
 			performersValue := performersMap["value"].([]interface{})
 			valueString := strings.Trim(fmt.Sprint(performersValue), "[]")
 			performerIds = append(performerIds, valueString)
-			logger.Warn(performerIds)
 		}
 	}
 
@@ -300,9 +294,11 @@ func (r *performerResolver) AppearsWithGalleryCount(ctx context.Context, obj *mo
 
 func (r *performerResolver) AppearsWithMovieCount(ctx context.Context, obj *models.Performer) (ret *int, err error) {
 
-	logger.Warn("begin image pair count")
-
-	performerIds := []string{strconv.Itoa(obj.ID)}
+	performers := models.MultiCriterionInput{
+		Modifier: models.CriterionModifierIncludesAll,
+		Value: []string{
+			strconv.Itoa(obj.ID),
+		}}
 
 	rq := graphql.GetOperationContext(ctx).Variables
 
@@ -315,17 +311,18 @@ func (r *performerResolver) AppearsWithMovieCount(ctx context.Context, obj *mode
 		if performerFilterMap["performers"] == nil {
 			return nil, err
 		} else {
+
 			performersMap := performerFilterMap["performers"].(map[string]interface{})
 			performersValue := performersMap["value"].([]interface{})
 			valueString := strings.Trim(fmt.Sprint(performersValue), "[]")
-			performerIds = append(performerIds, valueString)
-			logger.Warn(performerIds)
+			performers.Value = append(performers.Value, valueString)
+
 		}
 	}
 
 	var res int
 	if err := r.withReadTxn(ctx, func(ctx context.Context) error {
-		res, err = image.CountByPerformers(ctx, r.repository.Image, performerIds)
+		res, err = r.repository.Movie.CountByPerformers(ctx, performers)
 		return err
 	}); err != nil {
 		return nil, err
@@ -357,7 +354,6 @@ func (r *performerResolver) AppearsWithSceneCount(ctx context.Context, obj *mode
 			performersValue := performersMap["value"].([]interface{})
 			valueString := strings.Trim(fmt.Sprint(performersValue), "[]")
 			performerIds = append(performerIds, valueString)
-			logger.Warn(performerIds)
 		}
 	}
 

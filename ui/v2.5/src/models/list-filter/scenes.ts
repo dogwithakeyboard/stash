@@ -43,8 +43,7 @@ const sortByOptions = [
   "resume_time",
   "play_duration",
   "play_count",
-  // movie_scene_number moved to movie-scenes
-  // "movie_scene_number",
+  "movie_scene_number",
   "interactive",
   "interactive_speed",
   "perceptual_similarity",

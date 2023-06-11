@@ -1,14 +1,28 @@
 import { PerformerListFilterOptions } from "./performers";
 import { ListFilterOptions } from "./filter-options";
 
-const AppearsWithListSortByOptions = ["appears_with_scenes", "appears_with_images", "appears_with_galleries"].map(
-  ListFilterOptions.createSortBy
-);
+const AppearsWithListSortByOptions = PerformerListFilterOptions.sortByOptions.map(option => {
+  if (option.value === 'scenes_count') {
+    return {
+      ...option,
+      value: 'appears_with_scenes',
+    };
+  }else if (option.value === 'images_count') {
+    return {
+      ...option,
+      value: 'appears_with_images',
+    };
+  }else if (option.value === 'galleries_count') {
+    return {
+      ...option,
+      value: 'appears_with_galleries',
+    };
+  } else {
+    return option;
+  }
+});
 
-const sortByOptions = [
-  ...AppearsWithListSortByOptions,
-  ...PerformerListFilterOptions.sortByOptions,
-];
+const sortByOptions = AppearsWithListSortByOptions;
 
 const defaultSortBy = "name";
 
