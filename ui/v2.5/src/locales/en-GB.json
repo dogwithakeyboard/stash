@@ -748,6 +748,7 @@
   "date": "Date",
   "date_format": "YYYY-MM-DD",
   "datetime_format": "YYYY-MM-DD HH:MM",
+  "days": "Days",
   "death_date": "Death Date",
   "death_year": "Death Year",
   "descending": "Descending",
@@ -933,6 +934,7 @@
   "filter": "Filter",
   "filter_name": "Filter name",
   "filters": "Filters",
+  "fixed_date": "Fixed Date",
   "folder": "Folder",
   "framerate": "Frame Rate",
   "frames_per_second": "{value} frames per second",
@@ -1007,6 +1009,7 @@
   },
   "megabits_per_second": "{value} megabits per second",
   "metadata": "Metadata",
+  "months": "Months",
   "movie": "Movie",
   "movie_scene_number": "Movie Scene Number",
   "movies": "Movies",
@@ -1083,6 +1086,7 @@
   "rating": "Rating",
   "recently_added_objects": "Recently Added {objects}",
   "recently_released_objects": "Recently Released {objects}",
+  "relative_date": "Relative Date",
   "release_notes": "Release Notes",
   "resolution": "Resolution",
   "resume_time": "Resume Time",
@@ -1247,6 +1251,7 @@
     "started_importing": "Started importing",
     "updated_entity": "Updated {entity}"
   },
+  "today": "Today",
   "total": "Total",
   "true": "True",
   "twitter": "Twitter",
@@ -1262,6 +1267,7 @@
   "view_all": "View All",
   "weight": "Weight",
   "weight_kg": "Weight (kg)",
+  "years": "Years",
   "years_old": "years old",
   "zip_file_count": "Zip File Count"
 }

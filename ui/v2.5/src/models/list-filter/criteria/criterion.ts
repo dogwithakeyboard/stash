@@ -813,17 +813,63 @@ export class DateCriterion extends Criterion<IDateValue> {
   protected toCriterionInput(): DateCriterionInput {
     return {
       modifier: this.modifier,
-      value: this.value.value,
-      value2: this.value.value2,
+      value: this.transformValueToInput(this.value.value),
+      value2: this.value.value2
+        ? this.transformValueToInput(this.value.value2)
+        : undefined,
     };
   }
 
-  protected getLabelValue() {
-    const { value } = this.value;
+  protected getLabelValue(intl: IntlShape) {
+    const { value, value2 } = this.value;
     return this.modifier === CriterionModifier.Between ||
       this.modifier === CriterionModifier.NotBetween
-      ? `${value}, ${this.value.value2}`
-      : `${value}`;
+      ? `${this.transformValueToLabel(intl, value)}, ${
+          value2 ? this.transformValueToLabel(intl, value2) : undefined
+        }`
+      : `${this.transformValueToLabel(intl, value)}`;
+  }
+
+  private transformValueToLabel(intl: IntlShape, value: string) {
+    const matchResult = value?.match(/(today)(?:\s*(-?\d+)\s*(\w+))?/);
+    if (matchResult == null) {
+      return value;
+    }
+
+    const [, today, number, datePart] = matchResult || [];
+
+    return `${intl.formatMessage({ id: today })}${
+      parseInt(number, 10) > 0
+        ? ` +${number}`
+        : parseInt(number, 10) < 0
+        ? ` ${number}`
+        : ""
+    }${datePart ? ` ${intl.formatMessage({ id: datePart })}` : ""}`;
+  }
+
+  private transformValueToInput(value: string): string {
+    const matchResult = value?.match(/today(?:\s*(-?\d+)\s*(\w+))?/);
+    if (matchResult == null) {
+      return value;
+    }
+
+    const [, number, datePart] = matchResult || [];
+    const currentDate = new Date();
+    const modifiedDate = new Date();
+
+    switch (datePart) {
+      case "days":
+        modifiedDate.setDate(currentDate.getDate() + parseInt(number));
+        break;
+      case "months":
+        modifiedDate.setMonth(currentDate.getMonth() + parseInt(number));
+        break;
+      case "years":
+        modifiedDate.setFullYear(currentDate.getFullYear() + parseInt(number));
+        break;
+    }
+
+    return modifiedDate.toISOString().slice(0, 10);
   }
 
   public isValid(): boolean {
