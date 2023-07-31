@@ -23,23 +23,29 @@ export const DateFilter: React.FC<IDateFilterProps> = ({
     [intl.formatMessage({ id: "months" }), "months"],
     [intl.formatMessage({ id: "years" }), "years"],
   ]);
-
   const { value } = criterion;
-  const [number1, setNumber1] = useState(
-    parseInt(value.value.match(/today(?:\s*(-?\d+)\s*)?/)?.[1] ?? "0", 10)
-  );
-  const [datePart1, setPart1] = useState(
-    value.value.match(/today(?:\s*-?\d+\s*(\w+))?/)?.[1] ?? "days"
-  );
-  const [number2, setNumber2] = useState(
-    parseInt(value.value2?.match(/today(?:\s*(-?\d+)\s*)?/)?.[1] ?? "0", 10)
-  );
-  const [datePart2, setPart2] = useState(
-    value.value2?.match(/today(?:\s*-?\d+\s*(\w+))?/)?.[1] ?? "days"
-  );
+
+  const [match, initNumber1, initDatePart1] =
+    regexRelativeDate(value.value) || [];
+
+  const [, initNumber2, initDatePart2] = regexRelativeDate(value.value2) || [];
+
+  const [number1, setNumber1] = useState(parseInt(initNumber1 ?? "0", 10));
+
+  const [datePart1, setPart1] = useState(initDatePart1 ?? "days");
+
+  const [number2, setNumber2] = useState(parseInt(initNumber2 ?? "0", 10));
+
+  const [datePart2, setPart2] = useState(initDatePart2 ?? "days");
+
   const [dateFilterFixedOrRelative, setDateFilter] = useState(
-    value.value.match(/today(?:\s*(-?\d+)\s*(\w+))?/) ? "r" : "f"
+    match ? "r" : "f"
   );
+
+  function regexRelativeDate(string: string | undefined) {
+    const matchResult = string?.match(/^today(?:\s(-?\d+)\s(days|months|years))?$/);
+    return matchResult;
+  }
 
   function onChanged(newValue: string, property: "value" | "value2") {
     const valueCopy = { ...value };

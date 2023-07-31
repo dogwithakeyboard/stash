@@ -831,14 +831,14 @@ export class DateCriterion extends Criterion<IDateValue> {
   }
 
   private transformValueToLabel(intl: IntlShape, value: string) {
-    const matchResult = value?.match(/(today)(?:\s*(-?\d+)\s*(\w+))?/);
+    const matchResult = value?.match(/^today(?:\s(-?\d+)\s(days|months|years))?$/);
     if (matchResult == null) {
       return value;
     }
 
-    const [, today, number, datePart] = matchResult || [];
+    const [, number, datePart] = matchResult || [];
 
-    return `${intl.formatMessage({ id: today })}${
+    return `${intl.formatMessage({ id: "today" })}${
       parseInt(number, 10) > 0
         ? ` +${number}`
         : parseInt(number, 10) < 0
@@ -848,7 +848,7 @@ export class DateCriterion extends Criterion<IDateValue> {
   }
 
   private transformValueToInput(value: string): string {
-    const matchResult = value?.match(/today(?:\s*(-?\d+)\s*(\w+))?/);
+    const matchResult = value?.match(/^today(?:\s(-?\d+)\s(days|months|years))?$/);
     if (matchResult == null) {
       return value;
     }
