@@ -1,5 +1,12 @@
 import { Tab, Nav, Dropdown, Button, ButtonGroup } from "react-bootstrap";
-import React, { useEffect, useState, useMemo, useContext, useRef } from "react";
+import React, {
+  useEffect,
+  useState,
+  useMemo,
+  useContext,
+  useRef,
+  useLayoutEffect,
+} from "react";
 import { FormattedMessage, useIntl } from "react-intl";
 import { useParams, useLocation, useHistory, Link } from "react-router-dom";
 import { Helmet } from "react-helmet";
@@ -456,14 +463,12 @@ const ScenePage: React.FC<IProps> = ({
         <Tab.Pane eventKey="scene-movie-panel">
           <SceneMoviePanel scene={scene} />
         </Tab.Pane>
-        {scene.galleries.length === 1 && (
-          <Tab.Pane eventKey="scene-galleries-panel">
-            <GalleryViewer galleryId={scene.galleries[0].id} />
-          </Tab.Pane>
-        )}
-        {scene.galleries.length > 1 && (
+        {scene.galleries.length >= 1 && (
           <Tab.Pane eventKey="scene-galleries-panel">
             <SceneGalleriesPanel galleries={scene.galleries} />
+            {scene.galleries.length === 1 && (
+              <GalleryViewer galleryId={scene.galleries[0].id} />
+            )}
           </Tab.Pane>
         )}
         <Tab.Pane eventKey="scene-video-filter-panel">
@@ -541,12 +546,11 @@ const SceneLoader: React.FC = () => {
   const { configuration } = useContext(ConfigurationContext);
   const { data, loading, error } = useFindScene(id ?? "");
 
-  const [scene, setScene] = useState<GQL.SceneDataFragment | undefined>(
-    data?.findScene ?? undefined
-  );
+  const [scene, setScene] = useState<GQL.SceneDataFragment>();
 
-  // only update scene when loading is done
-  useEffect(() => {
+  // useLayoutEffect to update before paint
+  useLayoutEffect(() => {
+    // only update scene when loading is done
     if (!loading) {
       setScene(data?.findScene ?? undefined);
     }
@@ -763,34 +767,32 @@ const SceneLoader: React.FC = () => {
     }
   }
 
-  if (!scene && loading) return <LoadingIndicator />;
-  if (error) return <ErrorMessage error={error.message} />;
-
-  if (!loading && !scene)
+  if (!scene) {
+    if (loading) return <LoadingIndicator />;
+    if (error) return <ErrorMessage error={error.message} />;
     return <ErrorMessage error={`No scene found with id ${id}.`} />;
+  }
 
   return (
     <div className="row">
-      {scene && (
-        <ScenePage
-          scene={scene}
-          setTimestamp={setTimestamp}
-          queueScenes={queueScenes ?? []}
-          queueStart={queueStart}
-          onDelete={onDelete}
-          onQueueNext={onQueueNext}
-          onQueuePrevious={onQueuePrevious}
-          onQueueRandom={onQueueRandom}
-          continuePlaylist={continuePlaylist}
-          loadScene={loadScene}
-          queueHasMoreScenes={queueHasMoreScenes}
-          onQueueLessScenes={onQueueLessScenes}
-          onQueueMoreScenes={onQueueMoreScenes}
-          collapsed={collapsed}
-          setCollapsed={setCollapsed}
-          setContinuePlaylist={setContinuePlaylist}
-        />
-      )}
+      <ScenePage
+        scene={scene}
+        setTimestamp={setTimestamp}
+        queueScenes={queueScenes ?? []}
+        queueStart={queueStart}
+        onDelete={onDelete}
+        onQueueNext={onQueueNext}
+        onQueuePrevious={onQueuePrevious}
+        onQueueRandom={onQueueRandom}
+        continuePlaylist={continuePlaylist}
+        loadScene={loadScene}
+        queueHasMoreScenes={queueHasMoreScenes}
+        onQueueLessScenes={onQueueLessScenes}
+        onQueueMoreScenes={onQueueMoreScenes}
+        collapsed={collapsed}
+        setCollapsed={setCollapsed}
+        setContinuePlaylist={setContinuePlaylist}
+      />
       <div className={`scene-player-container ${collapsed ? "expanded" : ""}`}>
         <ScenePlayer
           key="ScenePlayer"
