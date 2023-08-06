@@ -12,6 +12,8 @@ import {
   TimestampCriterionInput,
 } from "src/core/generated-graphql";
 import DurationUtils from "src/utils/duration";
+import TextUtils from "src/utils/text";
+import { regexRelativeDate } from "src/utils/relativeDate";
 import {
   CriterionType,
   IHierarchicalLabelValue,
@@ -831,7 +833,7 @@ export class DateCriterion extends Criterion<IDateValue> {
   }
 
   private transformValueToLabel(intl: IntlShape, value: string) {
-    const matchResult = value?.match(/^today(?:\s(-?\d+)\s(days|months|years))?$/);
+    const matchResult = regexRelativeDate(value);
     if (matchResult == null) {
       return value;
     }
@@ -848,7 +850,7 @@ export class DateCriterion extends Criterion<IDateValue> {
   }
 
   private transformValueToInput(value: string): string {
-    const matchResult = value?.match(/^today(?:\s(-?\d+)\s(days|months|years))?$/);
+    const matchResult = regexRelativeDate(value);
     if (matchResult == null) {
       return value;
     }
@@ -869,7 +871,7 @@ export class DateCriterion extends Criterion<IDateValue> {
         break;
     }
 
-    return modifiedDate.toISOString().slice(0, 10);
+    return TextUtils.dateToString(modifiedDate);
   }
 
   public isValid(): boolean {

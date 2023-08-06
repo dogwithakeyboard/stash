@@ -5,6 +5,7 @@ import { CriterionModifier } from "../../../core/generated-graphql";
 import { IDateValue } from "../../../models/list-filter/types";
 import { Criterion } from "../../../models/list-filter/criteria/criterion";
 import { DateInput } from "src/components/Shared/DateInput";
+import { regexRelativeDate } from "src/utils/relativeDate";
 import cx from "classnames";
 
 interface IDateFilterProps {
@@ -41,11 +42,6 @@ export const DateFilter: React.FC<IDateFilterProps> = ({
   const [dateFilterFixedOrRelative, setDateFilter] = useState(
     match ? "r" : "f"
   );
-
-  function regexRelativeDate(string: string | undefined) {
-    const matchResult = string?.match(/^today(?:\s(-?\d+)\s(days|months|years))?$/);
-    return matchResult;
-  }
 
   function onChanged(newValue: string, property: "value" | "value2") {
     const valueCopy = { ...value };
