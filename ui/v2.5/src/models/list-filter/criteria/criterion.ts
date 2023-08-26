@@ -840,13 +840,29 @@ export class DateCriterion extends Criterion<IDateValue> {
 
     const [, number, datePart] = matchResult || [];
 
+
+    const currentDate = new Date();
+    const modifiedDate = new Date();
+
+    switch (datePart) {
+      case "days":
+        modifiedDate.setDate(currentDate.getDate() + parseInt(number));
+        break;
+      case "months":
+        modifiedDate.setMonth(currentDate.getMonth() + parseInt(number));
+        break;
+      case "years":
+        modifiedDate.setFullYear(currentDate.getFullYear() + parseInt(number));
+        break;
+    }
+
     return `${intl.formatMessage({ id: "today" })}${
       parseInt(number, 10) > 0
         ? ` +${number}`
         : parseInt(number, 10) < 0
         ? ` ${number}`
         : ""
-    }${datePart ? ` ${intl.formatMessage({ id: datePart })}` : ""}`;
+    }${datePart ? ` ${intl.formatMessage({ id: datePart })}` : ""} (${TextUtils.dateToString(modifiedDate)})`;
   }
 
   private transformValueToInput(value: string): string {

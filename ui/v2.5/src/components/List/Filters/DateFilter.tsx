@@ -24,6 +24,12 @@ export const DateFilter: React.FC<IDateFilterProps> = ({
     [intl.formatMessage({ id: "months" }), "months"],
     [intl.formatMessage({ id: "years" }), "years"],
   ]);
+
+  const dateDirection = new Map([
+    [intl.formatMessage({ id: "past" }), "-"],
+    [intl.formatMessage({ id: "future" }), "+"],
+  ]);
+  
   const { value } = criterion;
 
   const [match, initNumber1, initDatePart1] =
@@ -31,16 +37,19 @@ export const DateFilter: React.FC<IDateFilterProps> = ({
 
   const [, initNumber2, initDatePart2] = regexRelativeDate(value.value2) || [];
 
-  const [number1, setNumber1] = useState(parseInt(initNumber1 ?? "0", 10));
+  const numberInt1 = parseInt(initNumber1, 10);
+  const numberInt2 = parseInt(initNumber2, 10);
 
+  const [number1, setNumber1] = useState(isNaN(numberInt1) ? 0 : Math.abs(numberInt1));
   const [datePart1, setPart1] = useState(initDatePart1 ?? "days");
+  const [direction1, setDirection1] = useState(numberInt1 > 0 ? "+" : "-" )
 
-  const [number2, setNumber2] = useState(parseInt(initNumber2 ?? "0", 10));
-
+  const [number2, setNumber2] = useState(isNaN(numberInt2) ? 0 : Math.abs(numberInt2));
   const [datePart2, setPart2] = useState(initDatePart2 ?? "days");
+  const [direction2, setDirection2] = useState(numberInt2 > 0 ? "+" : "-" )
 
-  const [dateFilterFixedOrRelative, setDateFilter] = useState(
-    match ? "r" : "f"
+  const [dateFilterRelative, setDateFilter] = useState(
+    match ? true : false
   );
 
   function onChanged(newValue: string, property: "value" | "value2") {
@@ -49,14 +58,25 @@ export const DateFilter: React.FC<IDateFilterProps> = ({
     onValueChanged(valueCopy);
   }
 
-  function onNumberChanged(newNumber: number, property: "value" | "value2") {
+  function onNumberChanged(newValue: number, property: "value" | "value2") {
     if (property === "value") {
-      setNumber1(newNumber);
+      setNumber1(newValue);
     } else {
-      setNumber2(newNumber);
+      setNumber2(newValue);
     }
     const valueCopy = { ...value };
-    valueCopy[property] = makeValue(newNumber, null, property);
+    valueCopy[property] = makeValue(newValue, null, null, property);
+    onValueChanged(valueCopy);
+  }
+
+  function onDirectionChanged(newValue: string, property: "value" | "value2") {
+    if (property === "value") {
+      setDirection1(newValue);
+    } else {
+      setDirection2(newValue);
+    }
+    const valueCopy = { ...value };
+    valueCopy[property] = makeValue(null, null, newValue, property);
     onValueChanged(valueCopy);
   }
 
@@ -67,45 +87,48 @@ export const DateFilter: React.FC<IDateFilterProps> = ({
       setPart2(newPart);
     }
     const valueCopy = { ...value };
-    valueCopy[property] = makeValue(null, newPart, property);
+    valueCopy[property] = makeValue(null, newPart, null, property);
     onValueChanged(valueCopy);
   }
 
   function makeValue(
     newNumber: number | null,
     newPart: string | null,
+    newDirection: string | null,
     property: "value" | "value2"
   ) {
     let valueString = "today";
     const number = newNumber ?? (property === "value" ? number1 : number2) ?? 0;
     const datePart =
       newPart ?? (property === "value" ? datePart1 : datePart2) ?? "days";
+    const direction = newDirection ?? (property === "value" ? direction1 : direction2) ?? "-";
 
-    if (number == 0) {
+    if (number === 0) {
       return valueString;
     }
-    valueString += " " + number;
-    if (datePart) {
-      valueString += " " + datePart;
+    valueString += ","
+    if (direction === "-" && number > 0){
+      valueString += "-"
     }
+    valueString += number + "," + datePart;
     return valueString;
   }
 
-  function onChangedDateFilterSelect(o: "r" | "f") {
+  function onChangedDateFilterSelect(o: boolean) {
     setDateFilter(o);
-    if (o === "r") {
+    if (o === true) {
       const valueCopy = { ...value };
-      valueCopy.value = makeValue(null, null, "value");
+      valueCopy.value = makeValue(null, null, null, "value");
       if (
         criterion.modifier === CriterionModifier.Between ||
         criterion.modifier === CriterionModifier.NotBetween
       ) {
-        valueCopy.value2 = makeValue(null, null, "value2");
+        valueCopy.value2 = makeValue(null, null, null, "value2");
       } else {
         valueCopy.value2 = undefined;
       }
       onValueChanged(valueCopy);
-    } else if (o === "f") {
+    } else if (o === false) {
       const valueCopy = { ...value };
       valueCopy.value = "";
       valueCopy.value2 = undefined;
@@ -118,7 +141,7 @@ export const DateFilter: React.FC<IDateFilterProps> = ({
     criterion.modifier === CriterionModifier.Equals ||
     criterion.modifier === CriterionModifier.NotEquals
   ) {
-    if (dateFilterFixedOrRelative === "f") {
+    if (dateFilterRelative === false) {
       equalsControl = (
         <Form.Group>
           <DateInput
@@ -128,9 +151,24 @@ export const DateFilter: React.FC<IDateFilterProps> = ({
           />
         </Form.Group>
       );
-    } else if (dateFilterFixedOrRelative === "r") {
+    } else if (dateFilterRelative === true) {
       equalsControl = (
         <>
+          <Form.Group>
+            <Form.Control
+              as="select"
+              className="btn-secondary"
+              type="option"
+              onChange={(e) => onDirectionChanged(e.target.value, "value")}
+              defaultValue={direction1}
+            >
+              {Array.from(dateDirection.entries()).map(([name, optionValue]) => (
+                <option value={optionValue} key={optionValue}>
+                  {name}
+                </option>
+              ))}
+            </Form.Control>
+          </Form.Group>
           <Form.Group>
             <Form.Control
               className="btn-secondary"
@@ -139,6 +177,7 @@ export const DateFilter: React.FC<IDateFilterProps> = ({
                 onNumberChanged(parseInt(e.target.value, 10), "value")
               }
               defaultValue={number1}
+              min={0}
             />
           </Form.Group>
           <Form.Group>
@@ -167,7 +206,7 @@ export const DateFilter: React.FC<IDateFilterProps> = ({
     criterion.modifier === CriterionModifier.Between ||
     criterion.modifier === CriterionModifier.NotBetween
   ) {
-    if (dateFilterFixedOrRelative === "f") {
+    if (dateFilterRelative === false) {
       lowerControl = (
         <Form.Group>
           <DateInput
@@ -177,9 +216,24 @@ export const DateFilter: React.FC<IDateFilterProps> = ({
           />
         </Form.Group>
       );
-    } else if (dateFilterFixedOrRelative === "r") {
+    } else if (dateFilterRelative === true) {
       lowerControl = (
         <>
+        <Form.Group>
+        <Form.Control
+          as="select"
+          className="btn-secondary"
+          type="option"
+          onChange={(e) => onDirectionChanged(e.target.value, "value")}
+          defaultValue={direction1}
+        >
+          {Array.from(dateDirection.entries()).map(([name, optionValue]) => (
+            <option value={optionValue} key={optionValue}>
+              {name}
+            </option>
+          ))}
+        </Form.Control>
+      </Form.Group>
           <Form.Group>
             <Form.Control
               className="btn-secondary"
@@ -188,7 +242,7 @@ export const DateFilter: React.FC<IDateFilterProps> = ({
                 onNumberChanged(parseInt(e.target.value, 10), "value")
               }
               defaultValue={number1}
-              placeholder={intl.formatMessage({ id: "criterion.greater_than" })}
+              min={0}
             />
           </Form.Group>
           <Form.Group>
@@ -217,7 +271,7 @@ export const DateFilter: React.FC<IDateFilterProps> = ({
     criterion.modifier === CriterionModifier.Between ||
     criterion.modifier === CriterionModifier.NotBetween
   ) {
-    if (dateFilterFixedOrRelative === "f") {
+    if (dateFilterRelative === false) {
       upperControl = (
         <Form.Group>
           <DateInput
@@ -238,9 +292,31 @@ export const DateFilter: React.FC<IDateFilterProps> = ({
           />
         </Form.Group>
       );
-    } else if (dateFilterFixedOrRelative === "r") {
+    } else if (dateFilterRelative === true) {
       upperControl = (
         <>
+        <Form.Group>
+        <Form.Control
+          as="select"
+          className="btn-secondary"
+          type="option"
+          onChange={(e) =>
+            onDirectionChanged(
+              e.target.value,
+              criterion.modifier === CriterionModifier.LessThan
+                ? "value"
+                : "value2"
+            )
+          }
+          defaultValue={criterion.modifier === CriterionModifier.LessThan ? direction1 : direction2 }
+        >
+          {Array.from(dateDirection.entries()).map(([name, optionValue]) => (
+            <option value={optionValue} key={optionValue}>
+              {name}
+            </option>
+          ))}
+        </Form.Control>
+      </Form.Group>
           <Form.Group>
             <Form.Control
               className="btn-secondary"
@@ -258,6 +334,7 @@ export const DateFilter: React.FC<IDateFilterProps> = ({
                   ? number1
                   : number2
               }
+              min={0}
             />
           </Form.Group>
           <Form.Group>
@@ -295,17 +372,17 @@ export const DateFilter: React.FC<IDateFilterProps> = ({
     <Form.Group className="modifier-options btn-group">
       <Button
         className={cx("modifier-option", {
-          selected: dateFilterFixedOrRelative === "f",
+          selected: dateFilterRelative === false,
         })}
-        onClick={() => onChangedDateFilterSelect("f")}
+        onClick={() => onChangedDateFilterSelect(false)}
       >
         {intl.formatMessage({ id: "fixed_date" })}
       </Button>
       <Button
         className={cx("modifier-option", {
-          selected: dateFilterFixedOrRelative === "r",
+          selected: dateFilterRelative === true,
         })}
-        onClick={() => onChangedDateFilterSelect("r")}
+        onClick={() => onChangedDateFilterSelect(true)}
       >
         {intl.formatMessage({ id: "relative_date" })}
       </Button>
