@@ -787,6 +787,39 @@ func (qb *PerformerStore) QueryByStudioID(ctx context.Context, performerFilter *
 
 }
 
+func (qb *PerformerStore) QueryByPerformerID(ctx context.Context, performerFilter *models.PerformerFilterType, findFilter *models.FindFilterType, studioID int) ([]*models.Performer, int, error) {
+	if performerFilter == nil {
+		performerFilter = &models.PerformerFilterType{}
+	}
+	if performerFilter.Performers == nil {
+		performerFilter.Performers = &models.MultiCriterionInput{
+			Value:    []string{strconv.FormatInt(int64(studioID), 10)},
+			Modifier: models.CriterionModifierIncludes,
+		}
+	} else {
+		performerFilter.Performers.Value = append(performerFilter.Studios.Value, strconv.FormatInt(int64(studioID), 10))
+		performerFilter.Performers.Modifier = models.CriterionModifierIncludes
+	}
+
+	query, err := qb.makeQuery(ctx, performerFilter, findFilter, "performer_performers")
+	if err != nil {
+		return nil, 0, err
+	}
+
+	idsResult, countResult, err := query.executeFind(ctx)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	performers, err := qb.FindMany(ctx, idsResult)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return performers, countResult, nil
+
+}
+
 func (qb *PerformerStore) QueryCount(ctx context.Context, performerFilter *models.PerformerFilterType, findFilter *models.FindFilterType) (int, error) {
 	query, err := qb.makeQuery(ctx, performerFilter, findFilter, "")
 	if err != nil {
@@ -1021,19 +1054,28 @@ func performerAppearsWithCriterionHandler(qb *PerformerStore, performers *models
 		if performers != nil {
 			formatMaps := []utils.StrFormatMap{
 				{
-					"primaryTable": performersScenesTable,
-					"joinTable":    performersScenesTable,
-					"primaryFK":    sceneIDColumn,
+					"primaryTable":  performersScenesTable,
+					"joinTable":     performersScenesTable + "2",
+					"primaryFK":     sceneIDColumn,
+					"sceneColumn":   "COUNT(" + performersScenesTable + "2." + performerIDColumn + ") AS scene_count",
+					"imageColumn":   "NULL AS image_count",
+					"galleryColumn": "NULL AS gallery_count",
 				},
 				{
-					"primaryTable": performersImagesTable,
-					"joinTable":    performersImagesTable,
-					"primaryFK":    imageIDColumn,
+					"primaryTable":  performersImagesTable,
+					"joinTable":     performersImagesTable + "2",
+					"primaryFK":     imageIDColumn,
+					"sceneColumn":   "NULL AS scene_count",
+					"imageColumn":   "COUNT(" + performersImagesTable + "2." + performerIDColumn + ") AS image_count",
+					"galleryColumn": "NULL AS gallery_count",
 				},
 				{
-					"primaryTable": performersGalleriesTable,
-					"joinTable":    performersGalleriesTable,
-					"primaryFK":    galleryIDColumn,
+					"primaryTable":  performersGalleriesTable,
+					"joinTable":     performersGalleriesTable + "2",
+					"primaryFK":     galleryIDColumn,
+					"sceneColumn":   "NULL AS scene_count",
+					"imageColumn":   "NULL AS image_count",
+					"galleryColumn": "COUNT(" + performersGalleriesTable + "2." + performerIDColumn + ") AS gallery_count",
 				},
 			}
 
@@ -1047,14 +1089,15 @@ func performerAppearsWithCriterionHandler(qb *PerformerStore, performers *models
 
 			f.addWith("performer(id) AS (VALUES(" + valuesClause + "))")
 
-			templStr := `SELECT {primaryTable}2.performer_id FROM {primaryTable}
-			INNER JOIN {primaryTable} AS {primaryTable}2 ON {primaryTable}.{primaryFK} = {primaryTable}2.{primaryFK}
+			templStr := `SELECT {joinTable}.performer_id, {sceneColumn}, {imageColumn}, {galleryColumn}
+			FROM {primaryTable}
+			INNER JOIN {primaryTable} AS {joinTable} ON {primaryTable}.{primaryFK} = {joinTable}.{primaryFK}
 			INNER JOIN performer ON {primaryTable}.performer_id = performer.id
-			WHERE {primaryTable}2.performer_id != performer.id`
+			WHERE {joinTable}.performer_id != performer.id
+			GROUP BY {joinTable}.performer_id`
 
 			if performers.Modifier == models.CriterionModifierIncludesAll && len(performers.Value) > 1 {
-				templStr += `GROUP BY {primaryTable}2.performer_id
-				HAVING(count(distinct {primaryTable}.performer_id) IS ` + strconv.Itoa(len(performers.Value)) + `)`
+				templStr += `HAVING(count(distinct {primaryTable}.performer_id) IS ` + strconv.Itoa(len(performers.Value)) + `)`
 			}
 
 			var unions []string
@@ -1062,7 +1105,10 @@ func performerAppearsWithCriterionHandler(qb *PerformerStore, performers *models
 				unions = append(unions, utils.StrFormat(templStr, c))
 			}
 
-			f.addWith(fmt.Sprintf("%s AS (%s)", derivedPerformerPerformersTable, strings.Join(unions, " UNION ")))
+			sel := "SELECT performer_id, COALESCE(CAST(GROUP_CONCAT(scene_count) AS INTEGER),0) AS scene_sum, CAST(COALESCE(GROUP_CONCAT(image_count),0) AS INTEGER) AS image_sum, CAST(COALESCE(GROUP_CONCAT(gallery_count),0) AS INTEGER) AS gallery_sum FROM ("
+			grp := ") GROUP BY performer_id"
+
+			f.addWith(fmt.Sprintf("%s AS (%s %s %s)", derivedPerformerPerformersTable, sel, strings.Join(unions, " UNION "), grp))
 
 			f.addInnerJoin(derivedPerformerPerformersTable, "", fmt.Sprintf("performers.id = %s.performer_id", derivedPerformerPerformersTable))
 		}
