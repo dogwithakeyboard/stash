@@ -60,6 +60,11 @@ type Performer {
   created_at: Time!
   updated_at: Time!
   movies: [Movie!]!
+  "Returns Performers appearing in Scenes, Images, Galleries or Movies with the Performer"
+  performers(
+    performer_filter: PerformerFilterType
+    filter: FindFilterType
+  ): FindPerformerAppearsWithResultType!
 }
 
 input PerformerCreateInput {

@@ -37,3 +37,30 @@ query FindPerformersForSelect(
     }
   }
 }
+
+query FindPerformerAppearsWith(
+  $id: ID!
+  $filter: FindFilterType
+  $performer_filter: PerformerFilterType
+) {
+  findPerformer(id: $id) {
+    id
+    performers(
+      filter: $filter
+      performer_filter: $performer_filter
+    ) {
+      count
+      performerAppearsWith {
+        performer_id
+        appearswith_performer_id
+        scene_count
+        image_count
+        gallery_count
+        movie_count
+        performer {
+          ...PerformerData
+        }
+      }
+    }
+  }
+}

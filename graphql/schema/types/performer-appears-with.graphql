@@ -1,0 +1,18 @@
+type PerformerAppearsWith {
+  performer_id: ID!
+  appearswith_performer_id: ID!
+  "Number of Scenes the Performers appear in together"
+  scene_count: Int! # Resolver
+  "Number of Images the Performers appear in together"
+  image_count: Int! # Resolver
+  "Number of Galleries the Performers appear in together"
+  gallery_count: Int! # Resolver
+  "Number of Movies the Performers appear in together"
+  movie_count: Int! # Resolver
+  performer: Performer!
+}
+
+type FindPerformerAppearsWithResultType {
+  count: Int!
+  performerAppearsWith: [PerformerAppearsWith!]!
+}
