@@ -34,3 +34,14 @@ func CountByPerformerIDStudioID(ctx context.Context, r models.MovieQueryer, perf
 
 	return r.QueryCount(ctx, filter, nil)
 }
+
+func CountByPerformerIDAppearsWithPerformerID(ctx context.Context, r models.MovieQueryer, performerID int, AppearsWithPerformerID int) (int, error) {
+	filter := &models.MovieFilterType{
+		Performers: &models.MultiCriterionInput{
+			Value:    []string{strconv.Itoa(performerID), strconv.Itoa(AppearsWithPerformerID)},
+			Modifier: models.CriterionModifierIncludesAll,
+		},
+	}
+
+	return r.QueryCount(ctx, filter, nil)
+}

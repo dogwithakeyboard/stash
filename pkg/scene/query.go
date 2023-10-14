@@ -160,3 +160,14 @@ func CountByPerformerIDStudioID(ctx context.Context, r models.SceneQueryer, perf
 
 	return r.QueryCount(ctx, filter, nil)
 }
+
+func CountByPerformerIDAppearsWithPerformerID(ctx context.Context, r models.SceneQueryer, performerID int, AppearsWithPerformerID int) (int, error) {
+	filter := &models.SceneFilterType{
+		Performers: &models.MultiCriterionInput{
+			Value:    []string{strconv.Itoa(performerID), strconv.Itoa(AppearsWithPerformerID)},
+			Modifier: models.CriterionModifierIncludesAll,
+		},
+	}
+
+	return r.QueryCount(ctx, filter, nil)
+}

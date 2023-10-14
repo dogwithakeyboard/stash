@@ -216,3 +216,34 @@ func (r *performerResolver) Movies(ctx context.Context, obj *models.Performer) (
 
 	return ret, nil
 }
+
+func (r *performerResolver) Performers(ctx context.Context, obj *models.Performer, performerFilter *models.PerformerFilterType, findFilter *models.FindFilterType) (ret *FindPerformerAppearsWithResultType, err error) {
+	var performers []*models.Performer
+	var appearsWithPerformers []*models.PerformerAppearsWith
+	var total int
+	if err := r.withReadTxn(ctx, func(ctx context.Context) error {
+		performers, total, err = r.repository.Performer.QueryByPerformerID(ctx, performerFilter, findFilter, obj.ID)
+		return err
+	}); err != nil {
+		return nil, err
+	}
+
+	for _, performer := range performers {
+
+		appearsWith := &models.PerformerAppearsWith{
+			PerformerID:            performer.ID,
+			AppearsWithPerformerID: obj.ID,
+			Performer:              *performer,
+		}
+
+		appearsWithPerformers = append(appearsWithPerformers, appearsWith)
+
+	}
+
+	ret = &FindPerformerAppearsWithResultType{
+		Count:                total,
+		PerformerAppearsWith: appearsWithPerformers,
+	}
+
+	return ret, nil
+}
