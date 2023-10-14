@@ -9,6 +9,8 @@ import {
   useFindPerformers,
   queryFindStudioPerformers,
   useFindStudioPerformers,
+  useFindPerformerAppearsWith,
+  queryFindPerformerAppearsWith,
   usePerformersDestroy,
 } from "src/core/StashService";
 import {
@@ -34,6 +36,11 @@ type FindStudioPerformersQueryResult = QueryResult<
   Omit<GQL.FindStudioPerformersQueryVariables, "id"> & { id?: string }
 >;
 
+type FindPerformerAppearsWithQueryResult = QueryResult<
+  GQL.FindPerformerAppearsWithQuery,
+  Omit<GQL.FindPerformerAppearsWithQueryVariables, "id"> & { id?: string }
+>;
+
 const StudioPerformerItemList = makeItemList({
   filterMode: GQL.FilterMode.Performers,
   useResult: (filter, id, depth) => {
@@ -52,6 +59,26 @@ const StudioPerformerItemList = makeItemList({
   },
   getCount(result: FindStudioPerformersQueryResult) {
     return result?.data?.findStudio?.performers?.count ?? 0;
+  },
+});
+
+const AppearsWithPerformerItemList = makeItemList({
+  filterMode: GQL.FilterMode.Performers,
+  useResult: (filter, id) => {
+    const result = useFindPerformerAppearsWith(
+      filter,
+      id
+    ) as FindPerformerAppearsWithQueryResult;
+    return result;
+  },
+  getItems(result: FindPerformerAppearsWithQueryResult) {
+    const performers = result?.data?.findPerformer?.performers.performerAppearsWith.map(
+      (p) => p.performer
+    );
+    return performers ?? [];
+  },
+  getCount(result: FindPerformerAppearsWithQueryResult) {
+    return result?.data?.findPerformer?.performers?.count ?? 0;
   },
 });
 
@@ -115,6 +142,19 @@ export const PerformerList: React.FC<IPerformerList> = ({
     );
   }
 
+  function isFindPerformerAppearsWithQueryResult(
+    obj: QueryResult
+  ): obj is FindPerformerAppearsWithQueryResult {
+    return (
+      typeof obj === "object" &&
+      obj != null &&
+      "data" in obj &&
+      "findPerformer" in obj.data &&
+      "performers" in obj.data.findPerformer &&
+      "performerAppearsWith" in obj.data.findPerformer.performers
+    );
+  }
+
   function isFindPerformersQueryResult(
     obj: QueryResult
   ): obj is GQL.FindPerformersQueryResult {
@@ -140,6 +180,10 @@ export const PerformerList: React.FC<IPerformerList> = ({
     const studioPerformersQuery =
       isFindStudioPerformersQueryResult(result) == true
         ? result.data.findStudio.performers
+        : undefined;
+    const performerAppearsWithQuery =
+      isFindPerformerAppearsWithQueryResult(result) == true
+        ? result.data.findPerformer.performers
         : undefined;
     const performersQuery =
       isFindPerformersQueryResult(result) == true
@@ -226,6 +270,18 @@ export const PerformerList: React.FC<IPerformerList> = ({
                 };
               }
             )
+          : isFindPerformerAppearsWithQueryResult(result) == true
+            ? result.data.findPerformer.performers.performerAppearsWith.map(
+                (performerAppearsWith: GQL.StudioPerformer) => {
+                  return {
+                    ...performerAppearsWith.performer,
+                    scene_count: performerAppearsWith.scene_count,
+                    image_count: performerAppearsWith.image_count,
+                    gallery_count: performerAppearsWith.gallery_count,
+                    movie_count: performerAppearsWith.movie_count,
+                  };
+                }
+              )  
           : isFindPerformersQueryResult(result) == true
           ? result.data.findPerformers.performers
           : undefined;
@@ -306,6 +362,20 @@ export const PerformerList: React.FC<IPerformerList> = ({
         queryArgs={queryArgs}
       />
     );
+    }else if (queryArgs?.type === "PERFORMER") {
+      return (
+        <AppearsWithPerformerItemList
+          selectable
+          persistState={persistState}
+          alterQuery={alterQuery}
+          otherOperations={otherOperations}
+          addKeybinds={addKeybinds}
+          renderContent={renderContent}
+          renderEditDialog={renderEditDialog}
+          renderDeleteDialog={renderDeleteDialog}
+          queryArgs={queryArgs}
+        />
+      );
   } else {
     return (
       <PerformerItemList

@@ -259,6 +259,32 @@ export const useFindPerformers = (filter?: ListFilterModel) =>
     },
   });
 
+  export const useFindPerformerAppearsWith = (
+    filter?: ListFilterModel,
+    id?: string,
+  ) =>
+    GQL.useFindPerformerAppearsWithQuery({
+      skip: id === "" || id === undefined,
+      variables: {
+        id: id as string,
+        filter: filter?.makeFindFilter(),
+        performer_filter: filter?.makeFilter(),
+      },
+    });
+  
+  export const queryFindPerformerAppearsWith  = (
+    filter: ListFilterModel,
+    id: string,
+  ) =>
+    client.query<GQL.FindPerformerAppearsWithQuery>({
+      query: GQL.FindStudioPerformersDocument,
+      variables: {
+        id: id,
+        filter: filter?.makeFindFilter(),
+        performer_filter: filter?.makeFilter(),
+      },
+    });
+  
 export const queryFindPerformers = (filter: ListFilterModel) =>
   client.query<GQL.FindPerformersQuery>({
     query: GQL.FindPerformersDocument,
