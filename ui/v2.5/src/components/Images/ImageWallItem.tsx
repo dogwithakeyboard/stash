@@ -58,6 +58,7 @@ export const ImageWallItem: React.FC<RenderImageProps & IExtraProps> = (
   return (
     <div
       className="wall-item"
+      role="button"
       style={divStyle}
       onClick={handleClick}
       {...dragProps}
